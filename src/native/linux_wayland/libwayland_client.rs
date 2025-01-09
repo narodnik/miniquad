@@ -565,10 +565,137 @@ pub struct wl_pointer_listener {
     >,
 }
 
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct wl_data_device_listener {
+    pub data_offer: ::std::option::Option<
+        unsafe extern "C" fn(
+            data: *mut ::core::ffi::c_void,
+            wl_data_device: *mut wl_data_device,
+            id: *mut wl_data_offer,
+        ),
+    >,
+
+    pub enter: ::std::option::Option<
+        unsafe extern "C" fn(
+            data: *mut ::core::ffi::c_void,
+            wl_data_device: *mut wl_data_device,
+            serial: u32,
+            surface: *mut wl_surface,
+            x: i32,
+            y: i32,
+            id: *mut wl_data_offer,
+        ),
+    >,
+
+    pub leave: ::std::option::Option<
+        unsafe extern "C" fn(data: *mut ::core::ffi::c_void, wl_data_device: *mut wl_data_device),
+    >,
+
+    pub motion: ::std::option::Option<
+        unsafe extern "C" fn(
+            data: *mut ::core::ffi::c_void,
+            wl_data_device: *mut wl_data_device,
+            time: u32,
+            x: i32,
+            y: i32,
+        ),
+    >,
+
+    pub drop: ::std::option::Option<
+        unsafe extern "C" fn(data: *mut ::core::ffi::c_void, wl_data_device: *mut wl_data_device),
+    >,
+
+    pub selection: ::std::option::Option<
+        unsafe extern "C" fn(
+            data: *mut ::core::ffi::c_void,
+            wl_data_device: *mut wl_data_device,
+            id: *mut wl_data_offer,
+        ),
+    >,
+}
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct wl_data_offer_listener {
+    pub offer: ::std::option::Option<
+        unsafe extern "C" fn(
+            data: *mut ::core::ffi::c_void,
+            wl_data_offer: *mut wl_data_offer,
+            mime_type: *const ::core::ffi::c_char,
+        ),
+    >,
+
+    pub source_actions: ::std::option::Option<
+        unsafe extern "C" fn(
+            data: *mut ::core::ffi::c_void,
+            wl_data_offer: *mut wl_data_offer,
+            source_actions: u32,
+        ),
+    >,
+
+    pub action: ::std::option::Option<
+        unsafe extern "C" fn(
+            data: *mut ::core::ffi::c_void,
+            wl_data_offer: *mut wl_data_offer,
+            dnd_action: u32,
+        ),
+    >,
+}
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct wl_data_source_listener {
+    pub target: ::std::option::Option<
+        unsafe extern "C" fn(
+            data: *mut ::core::ffi::c_void,
+            wl_data_source: *mut wl_data_source,
+            mime_type: *const ::core::ffi::c_char,
+        ),
+    >,
+
+    pub send: ::std::option::Option<
+        unsafe extern "C" fn(
+            data: *mut ::core::ffi::c_void,
+            wl_data_source: *mut wl_data_source,
+            mime_type: *const ::core::ffi::c_char,
+            fd: i32,
+        ),
+    >,
+
+    pub cancelled: ::std::option::Option<
+        unsafe extern "C" fn(data: *mut ::core::ffi::c_void, wl_data_source: *mut wl_data_source),
+    >,
+
+    pub dnd_drop_performed: ::std::option::Option<
+        unsafe extern "C" fn(data: *mut ::core::ffi::c_void, wl_data_source: *mut wl_data_source),
+    >,
+
+    pub dnd_finished: ::std::option::Option<
+        unsafe extern "C" fn(data: *mut ::core::ffi::c_void, wl_data_source: *mut wl_data_source),
+    >,
+
+    pub action: ::std::option::Option<
+        unsafe extern "C" fn(
+            data: *mut ::core::ffi::c_void,
+            wl_data_source: *mut wl_data_source,
+            dnd_action: u32,
+        ),
+    >,
+}
+
 pub type wl_display_connect =
     unsafe extern "C" fn(name: *const ::core::ffi::c_char) -> *mut wl_display;
 pub type wl_proxy_destroy = unsafe extern "C" fn(proxy: *mut wl_proxy);
 pub type wl_proxy_marshal = unsafe extern "C" fn(p: *mut wl_proxy, opcode: u32, ...);
+pub type wl_proxy_marshal_flags = unsafe extern "C" fn(
+    p: *mut wl_proxy,
+    opcode: u32,
+    interface: *const wl_interface,
+    version: u32,
+    flags: u32,
+    ...
+) -> *mut wl_proxy;
 pub type wl_proxy_marshal_constructor = unsafe extern "C" fn(
     proxy: *mut wl_proxy,
     opcode: u32,
@@ -587,6 +714,7 @@ pub type wl_proxy_add_listener = unsafe extern "C" fn(
     implementation: *mut ::std::option::Option<unsafe extern "C" fn()>,
     data: *mut ::core::ffi::c_void,
 ) -> ::core::ffi::c_int;
+pub type wl_proxy_get_version = unsafe extern "C" fn(proxy: *mut wl_proxy) -> u32;
 
 pub type wl_display_roundtrip =
     unsafe extern "C" fn(display: *mut wl_display) -> ::core::ffi::c_int;
@@ -599,10 +727,12 @@ pub struct LibWaylandClient {
     pub wl_display_connect: wl_display_connect,
     pub wl_proxy_destroy: wl_proxy_destroy,
     pub wl_proxy_marshal: wl_proxy_marshal,
+    pub wl_proxy_marshal_flags: wl_proxy_marshal_flags,
     pub wl_proxy_marshal_constructor: wl_proxy_marshal_constructor,
     pub wl_proxy_marshal_constructor_versioned: wl_proxy_marshal_constructor_versioned,
     pub wl_display_dispatch_pending: wl_display_dispatch_pending,
     pub wl_proxy_add_listener: wl_proxy_add_listener,
+    pub wl_proxy_get_version: wl_proxy_get_version,
     pub wl_display_roundtrip: wl_display_roundtrip,
     pub wl_registry_interface: *mut wl_interface,
     pub wl_compositor_interface: *mut wl_interface,
@@ -615,6 +745,9 @@ pub struct LibWaylandClient {
     pub wl_shm_pool_interface: *mut wl_interface,
     pub wl_keyboard_interface: *mut wl_interface,
     pub wl_pointer_interface: *mut wl_interface,
+    pub wl_data_device_manager_interface: *mut wl_interface,
+    pub wl_data_device_interface: *mut wl_interface,
+    pub wl_data_source_interface: *mut wl_interface,
 }
 
 impl LibWaylandClient {
@@ -630,12 +763,14 @@ impl LibWaylandClient {
 
                 wl_proxy_destroy: module.get_symbol("wl_proxy_destroy").unwrap(),
                 wl_proxy_marshal: module.get_symbol("wl_proxy_marshal").unwrap(),
+                wl_proxy_marshal_flags: module.get_symbol("wl_proxy_marshal_flags").unwrap(),
                 wl_proxy_marshal_constructor: module
                     .get_symbol("wl_proxy_marshal_constructor")
                     .unwrap(),
                 wl_proxy_marshal_constructor_versioned: module
                     .get_symbol("wl_proxy_marshal_constructor_versioned")
                     .unwrap(),
+                wl_proxy_get_version: module.get_symbol("wl_proxy_get_version").unwrap(),
                 wl_display_roundtrip: module.get_symbol("wl_display_roundtrip").unwrap(),
 
                 wl_registry_interface: module.get_symbol("wl_registry_interface").unwrap(),
@@ -651,6 +786,11 @@ impl LibWaylandClient {
                 wl_shm_pool_interface: module.get_symbol("wl_shm_pool_interface").unwrap(),
                 wl_keyboard_interface: module.get_symbol("wl_keyboard_interface").unwrap(),
                 wl_pointer_interface: module.get_symbol("wl_pointer_interface").unwrap(),
+                wl_data_device_manager_interface: module
+                    .get_symbol("wl_data_device_manager_interface")
+                    .unwrap(),
+                wl_data_device_interface: module.get_symbol("wl_data_device_interface").unwrap(),
+                wl_data_source_interface: module.get_symbol("wl_data_source_interface").unwrap(),
 
                 _module: std::rc::Rc::new(module),
             })
@@ -678,5 +818,11 @@ impl LibWaylandClient {
         );
 
         id as *mut _
+    }
+
+    pub unsafe fn wl_proxy_get_version<T>(&self, proxy: *mut T) -> u32 {
+        let proxy: *mut wl_proxy = proxy as _;
+        assert!(!proxy.is_null());
+        (self.wl_proxy_get_version)(proxy)
     }
 }
