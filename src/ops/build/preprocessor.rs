@@ -2,6 +2,8 @@ use std::{fmt::Write, fs, path::PathBuf};
 
 #[derive(Debug, Default)]
 struct QuadSurfaceInject {
+    body: String,
+    constructor: String,
     on_create_input_connection: String,
 }
 
@@ -24,6 +26,10 @@ struct Inject {
 impl Inject {
     fn add(&mut self, other: Inject) {
         self.imports.push_str(&other.imports);
+        self.quad_surface.body.push_str(&other.quad_surface.body);
+        self.quad_surface
+            .constructor
+            .push_str(&other.quad_surface.constructor);
         self.quad_surface
             .on_create_input_connection
             .push_str(&other.quad_surface.on_create_input_connection);
@@ -55,6 +61,18 @@ fn parse_inject_template(file: &str) -> Inject {
             assert!(target.is_none());
 
             target = Some(&mut res.imports);
+            continue;
+        }
+        if line.starts_with("//%") && line.contains("QUAD_SURFACE_BODY") {
+            assert!(target.is_none());
+
+            target = Some(&mut res.quad_surface.body);
+            continue;
+        }
+        if line.starts_with("//%") && line.contains("QUAD_SURFACE_CONSTRUCTOR") {
+            assert!(target.is_none());
+
+            target = Some(&mut res.quad_surface.constructor);
             continue;
         }
         if line.starts_with("//%") && line.contains("QUAD_SURFACE_ON_CREATE_INPUT_CONNECTION") {
@@ -168,6 +186,8 @@ pub fn preprocess_main_activity(
     let q = &inject.quad_surface;
     let m = &inject.main_activity;
     let res = res.replace("//% IMPORTS", &inject.imports);
+    let res = res.replace("//% QUAD_SURFACE_BODY", &q.body);
+    let res = res.replace("//% QUAD_SURFACE_CONSTRUCTOR", &q.constructor);
     let res = res.replace(
         "//% QUAD_SURFACE_ON_CREATE_INPUT_CONNECTION",
         &q.on_create_input_connection,
