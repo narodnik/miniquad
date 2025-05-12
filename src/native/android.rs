@@ -184,6 +184,7 @@ impl MainThreadState {
         match msg {
             Message::SurfaceCreated { window } => unsafe {
                 self.update_surface(window);
+                self.event_handler.force_reload()
             },
             Message::SurfaceDestroyed => unsafe {
                 self.destroy_surface();
@@ -373,6 +374,7 @@ pub unsafe fn run<F>(conf: crate::conf::Conf, f: F)
 where
     F: 'static + FnOnce() -> Box<dyn EventHandler>,
 {
+    /*
     {
         use std::ffi::CString;
         use std::panic;
@@ -384,6 +386,7 @@ where
             console_error(msg.as_ptr());
         }));
     }
+    */
 
     if conf.fullscreen {
         let env = attach_jni_env();
@@ -450,7 +453,7 @@ where
 
         let (tx, requests_rx) = std::sync::mpsc::channel();
         let clipboard = Box::new(AndroidClipboard::new());
-        crate::set_display(NativeDisplayData {
+        crate::set_or_replace_display(NativeDisplayData {
             high_dpi: conf.high_dpi,
             blocking_event_loop: conf.platform.blocking_event_loop,
             ..NativeDisplayData::new(screen_width as _, screen_height as _, tx, clipboard)

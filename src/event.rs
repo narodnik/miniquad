@@ -213,7 +213,7 @@ pub trait EventHandler {
 
     /// Window has been restored
     /// Right now is only implemented on Android, X11 and wasm,
-    /// On Andoid window_minimized_event is called on a Pause ndk callback
+    /// On Andoid window_restored_event is called on a Resume ndk callback
     /// On X11 and wasm it will be called on focus change events.
     fn window_restored_event(&mut self) {}
 
@@ -222,6 +222,7 @@ pub trait EventHandler {
     /// handler callback code can handle this event by calling
     /// ctx.cancel_quit() to cancel the quit.
     /// If the event is ignored, the application will quit as usual.
+    /// On Andoid quit_requested_event is called on a Destroy ndk callback
     fn quit_requested_event(&mut self) {}
 
     /// A file has been dropped over the application.
@@ -230,4 +231,6 @@ pub trait EventHandler {
     /// `ctx.dropped_file_path()`, and for wasm targets the file bytes
     /// can be requested with `ctx.dropped_file_bytes()`.
     fn files_dropped_event(&mut self) {}
+
+    fn force_reload(&mut self) {}
 }
