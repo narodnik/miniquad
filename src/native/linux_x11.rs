@@ -439,6 +439,9 @@ impl X11Display {
                 SetImeEnabled(..) => {
                     // IME enable/disable not implemented for X11 yet
                 }
+                SetSleepInterval(..) => {
+                    // sleep interval is only supported on Android
+                }
             }
         }
     }

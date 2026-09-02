@@ -251,6 +251,47 @@ pub mod window {
         }
     }
 
+    /// Set the periodic wakeup interval for the `update()`/`draw()` functions while
+    /// `conf.platform.blocking_event_loop` is enabled.
+    ///
+    /// `Some(ms)` will periodically wakeup `update()`/`draw()` every `ms` milliseconds,
+    /// just like [`Conf::platform`]'s `sleep_interval_ms`, but changeable at runtime.
+    ///
+    /// `None` will block the event loop until an actual event arrives
+    /// (input, lifecycle event or a [`schedule_update`] from another thread).
+    ///
+    /// A common use case is pausing the periodic updates on Android while the
+    /// screen is off, and restoring them when the screen comes back on:
+    /// ```ignore
+    /// fn window_minimized_event(&mut self) {
+    ///     miniquad::set_sleep_interval(None);
+    /// }
+    /// fn window_restored_event(&mut self) {
+    ///     miniquad::set_sleep_interval(Some(500));
+    /// }
+    /// ```
+    ///
+    /// Both sides are explicit: setting `None` without restoring an interval
+    /// later means no periodic updates will happen until an event wakes the loop.
+    ///
+    /// Currently supported only on Android. Does nothing without
+    /// `conf.platform.blocking_event_loop`.
+    ///
+    /// [`schedule_update`]: crate::window::schedule_update
+    /// [`Conf::platform`]: crate::conf::Conf::platform
+    pub fn set_sleep_interval(ms: Option<u32>) {
+        #[cfg(all(target_os = "android", not(target_arch = "wasm32")))]
+        {
+            let d = native_display().lock().unwrap();
+            (d.native_requests)(native::Request::SetSleepInterval(ms));
+        }
+
+        #[cfg(not(all(target_os = "android", not(target_arch = "wasm32"))))]
+        {
+            let _ = ms;
+        }
+    }
+
     /// Show or hide the mouse cursor
     pub fn show_mouse(shown: bool) {
         let d = native_display().lock().unwrap();

@@ -138,6 +138,11 @@ struct MainThreadState {
     fullscreen: bool,
     update_requested: bool,
     keymods: KeyMods,
+
+    /// Current periodic wakeup interval for the blocking event loop.
+    /// `None` blocks until a real event arrives. Changeable at runtime
+    /// via `set_sleep_interval`.
+    sleep_interval: Option<Duration>,
 }
 
 impl MainThreadState {
@@ -253,10 +258,12 @@ impl MainThreadState {
     }
 
     fn frame(&mut self) {
+        // Reset unconditionally so a schedule_update while the surface is
+        // gone results in exactly one update() call instead of a busy loop.
+        self.update_requested = false;
         self.event_handler.update();
 
         if self.surface.is_null() == false {
-            self.update_requested = false;
             self.event_handler.draw();
 
             unsafe {
@@ -271,6 +278,9 @@ impl MainThreadState {
         match request {
             ScheduleUpdate => {
                 self.update_requested = true;
+            }
+            SetSleepInterval(ms) => {
+                self.sleep_interval = ms.map(|ms| Duration::from_millis(ms as u64));
             }
             SetFullscreen(fullscreen) => {
                 unsafe {
@@ -532,12 +542,11 @@ where
                 alt: false,
                 logo: false,
             },
+            sleep_interval: conf
+                .platform
+                .sleep_interval_ms
+                .map(|sleep| Duration::from_millis(sleep as u64)),
         };
-
-        let rx_timeout = conf
-            .platform
-            .sleep_interval_ms
-            .map(|sleep| Duration::from_millis(sleep as u64));
 
         while !s.quit {
             let block_on_wait = conf.platform.blocking_event_loop && !s.update_requested;
@@ -546,7 +555,7 @@ where
                 // We don't need to loop here because the loop above consumes all
                 // available messages. Instead we are going to block until receiving here.
 
-                match rx_recv(&rx, rx_timeout) {
+                match rx_recv(&rx, s.sleep_interval) {
                     Ok(msg) => s.process_message(msg),
                     // Timeout so time to do periodic update()
                     Err(mpsc::RecvTimeoutError::Timeout) => s.update_requested = true,

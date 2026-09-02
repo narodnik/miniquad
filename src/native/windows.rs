@@ -1146,6 +1146,9 @@ impl WindowsDisplay {
             SetImeEnabled(enabled) => {
                 self.set_ime_enabled(enabled);
             }
+            SetSleepInterval(..) => {
+                // sleep interval is only supported on Android
+            }
         }
     }
 }

@@ -157,6 +157,12 @@ pub struct Platform {
     /// continuously drawing without having to continuously schedule updates that can
     /// choke the receiver queue.
     ///
+    /// The interval can be changed at runtime with
+    /// [`set_sleep_interval`](super::window::set_sleep_interval), e.g. to pause the
+    /// periodic updates while the screen is off on Android:
+    /// call `set_sleep_interval(None)` from `window_minimized_event` and
+    /// `set_sleep_interval(Some(ms))` from `window_restored_event`.
+    ///
     /// Currently supported only on Android.
     pub sleep_interval_ms: Option<u32>,
 
